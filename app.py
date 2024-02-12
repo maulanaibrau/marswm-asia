@@ -1,14 +1,18 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import geopandas as gpd
 import tensorflow as tf
+import matplotlib.pyplot as plt
+import folium
 import os
+import glob
 import tempfile
-from keras.models import Sequential
+
+from keras.models import Sequential     
 from keras.layers import Dense
 from keras.layers import LSTM
-
-import matplotlib.pyplot as plt
+from streamlit_folium import st_folium
 
 from helper import readData
 
@@ -124,38 +128,124 @@ with tab1:
 with tab2:
     st.image("Kameda Watershed.png")
 
-    fig, ax1 = plt.subplots(1, figsize=(15, 8))
-    ax_21 = ax1.twinx()
-    #
+    rootFolder = os.path.join(os.getcwd(), "01_apps")
+    subFolders = [name for name in os.listdir(rootFolder) if os.path.isdir(os.path.join(rootFolder, name))]
 
+    rainFolderName = st.selectbox(
+        "Choose the rain folder",
+        subFolders,
+        #index = None,
+        label_visibility = "hidden",
+        placeholder = "Choose the rain folder"
+    )
 
-    # # Assuming X_train is your normalized rainfall data for all files
-    # num_files = X_train.shape[0]
+    selectedRainDirectory = os.path.join(rootFolder, rainFolderName, "WL-Cell")
+    listOfCellWaterLevelFiles = [os.path.splitext(filename)[0] for filename in os.listdir(selectedRainDirectory)]
+    cellWaterLevelFile = st.selectbox(
+        "Choose the water level file",
+        listOfCellWaterLevelFiles,
+        #index = None,
+        label_visibility = "hidden",
+        placeholder = "Choose the water level file"
+    )
 
-    # # Slider to select the file index
-    # selected_file_index = st.slider("Select File Index", 0, num_files - 1, 0)
+    # load csv
+    selectedFile = os.path.join(rootFolder, rainFolderName, "WL-Cell", cellWaterLevelFile + '.csv')
+    waterLevelValues = pd.read_csv(selectedFile)
+    waterLevelValues["step"] = "step" + waterLevelValues["step"].apply(str)
+    waterLevelValues = waterLevelValues.T
+    waterLevelValues.columns = waterLevelValues.iloc[0]
+    waterLevelValues = waterLevelValues[1:]
+    waterLevelValuesCN = waterLevelValues.assign(CN=range(1, len(waterLevelValues)+1, 1))
 
-    # # Flattening the 3D array to a 2D array for the selected file
-    # selected_file_rainfall = X_train[selected_file_index, :, :].reshape(X_train.shape[1], -1)
+    # load map
+    kamedaMapPath = os.path.join(rootFolder, "Kameda_Cells.shp")
+    kamedaMap = gpd.read_file(kamedaMapPath)
+    gdf = kamedaMap.set_geometry("geometry")
+    kamedaMap = gdf.to_crs("EPSG:4326")
 
-    # # Assuming you have corresponding calibration data for each file
-    # selected_file_calibration = Y_train[selected_file_index, :]
+    # join csv + map on CN
+    kamedaMerge = gpd.GeoDataFrame(waterLevelValuesCN.merge(kamedaMap, on="CN"))
+    # Centering the map automatically (based on our features)
+    x_map = kamedaMerge.centroid.x.mean()
+    y_map = kamedaMerge.centroid.y.mean()
 
-    # # Creating DataFrames
-    # chart_rainfall_data = pd.DataFrame(selected_file_rainfall, columns=['Rainfall at Time Step {}'.format(i) for i in range(selected_file_rainfall.shape[1])])
-    # chart_calibration_data = pd.DataFrame({'Water Depth': selected_file_calibration})
+    selectedStep = st.select_slider(
+        'Simulate the value of water level', 
+        options = waterLevelValues.columns
+    )
 
-    # # Plotting the line charts
-    # st.line_chart(chart_rainfall_data, height=650, use_container_width=True)
+    # dissolve kameda by its step
+    kamedaMergeDissolve = kamedaMerge[[selectedStep, 'CN', 'geometry', 'Area']]
+    kamedaMergeDissolve = kamedaMerge.dissolve(
+        by=selectedStep,
+        aggfunc={
+            "CN": "count",
+            "Area": "sum"
+        }
+    )
+    kamedaMergeDissolve = kamedaMergeDissolve.reset_index()
+    
+    # initiate the basemap
+    m = folium.Map(location=[y_map, x_map],  # center of the folium map
+                   zoom_start=12,            # initial zoom
+                   tiles="CartoDB positron") # type of map
+    # folium.TileLayer('CartoDB positron', name="Light Map", control=False).add_to(m)
+    # folium.GeoJson("kameda4.geojson").add_to(m)
 
-    # # Adding a separate axis for the calibration data
-    # fig, ax = plt.subplots()
-    # ax2 = ax.twinx()
-    # ax2.plot(chart_calibration_data.index, chart_calibration_data['Water Depth'], 'r-')
-    # ax2.set_ylabel('Water Depth', color='red')
-    # st.pyplot(fig)
+    folium.Choropleth(
+        geo_data=kamedaMergeDissolve,       # geo data
+        data=kamedaMergeDissolve,           # data
+        columns=["CN", selectedStep],       # [key, value]
+        key_on="feature.properties.CN",     # feature.properties.key
+        fill_color="YlGnBu",                # cmap
+        name="Kameda",
+        show=True,
+    ).add_to(m)
+    folium.LayerControl(collapsed=True).add_to(m)
+    st_folium(m)
 
+    # kamedaMergeDissolve["geometry"] = kamedaMergeDissolve.geometry.simplify(0.05)
+    # kamedaExplore = kamedaMergeDissolve.explore(
+    #     column = f'{selectedStep}', 
+    #     scheme = "naturalbreaks",
+    #     legend = True,
+    #     k = 5,
+    #     tooltip = f"{selectedStep}",
+    #     popup = [f"{selectedStep}", "Area"],
+    #     legend_kwds = dict(colorbar=False), 
+    #     name = "Kameda"
+    # )
+    # folium.TileLayer("CartoDB positron", show=False).add_to(kamedaExplore)
+    # folium.LayerControl().add_to(kamedaExplore)
+    # st_folium(kamedaExplore)
 
-# plot data
-#chart_data = pd.DataFrame(np.random.randn(10,3),columns=['a','b','c'])
-#st.line_chart(chart_data, height=650)
+    fig, ax = plt.subplots(1,1)
+    kamedaMerge.plot(
+        column=selectedStep,
+        # legend=True,
+        ax=ax,
+        cmap='rainbow'
+    )
+    ax.set_title("LTSM " + selectedStep)
+    st.pyplot(fig)
+    
+    code = cellWaterLevelFile.split("_")[0]
+    rainFallPath = glob.glob(os.path.join(rootFolder, rainFolderName, "Rainfall", code + "*"))[0]
+    rainFallData = pd.read_csv(rainFallPath, names=["rainfall"])
+    WvMlPath = glob.glob(os.path.join(rootFolder, rainFolderName, "WL-ML", code + "*"))[0]
+    WvMlData = pd.read_csv(WvMlPath, names=["wv_ml"])
+    WvPmPath = glob.glob(os.path.join(rootFolder, rainFolderName, "WL-PM", code + "*"))[0]
+    WvPmPData = pd.read_csv(WvPmPath, names=["wv_pm"])
+
+    figs, axs = plt.subplots(3)
+    axs[0].plot(rainFallData)
+    axs[0].set_title("Rainfall")
+    axs[1].plot(WvMlData)
+    axs[1].set_title("Water Volume from Machine Learning Model")
+    axs[2].plot(WvPmPData)
+    axs[2].set_title("Water Volume from Physical Model")
+
+    st.pyplot(figs)
+
+    

@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xml:lang="en"><Esri><CreaDate>20240206</CreaDate><CreaTime>13251300</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>TRUE</SyncOnce><DataProperties><lineage><Process ToolSource="c:\program files (x86)\arcgis\desktop10.4\ArcToolbox\Toolboxes\Data Management Tools.tbx\CalculateField" Date="20231027" Time="102130">CalculateField 地形適合Polygon_亀田郷04_elv Diffrnce_Z "Abs ( [Z_TopoRevm] - [Z_GSI_medi] )" VB #</Process></lineage></DataProperties></Esri></metadata>
