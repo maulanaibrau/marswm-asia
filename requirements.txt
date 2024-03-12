@@ -1,0 +1,11 @@
+geopandas
+streamlit
+folium
+streamlit_folium
+tensorflow
+numpy
+pandas
+matplotlib
+keras
+st_pages
+mapclassify
