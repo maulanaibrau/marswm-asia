@@ -1,0 +1,19 @@
+〇Kamedagou_2023_Harvest.js
+
+polygon and yield data
+
+〇map.js
+
+map code
+
+〇polygonTojs.py
+
+kml→js
+
+〇TopPage.html
+
+displaying map in the Internet
+
+
+※The red polygons in map mean "yield < 500",
+  but they've likely been misundorstood as paddy field.

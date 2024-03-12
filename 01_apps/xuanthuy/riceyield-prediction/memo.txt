@@ -1,0 +1,13 @@
+About red polygons
+
+〇east side
+
+arised from the lack of satellite track
+
+
+〇west side
+
+My method to identify paddies is just detecting water.
+Those red polygons may have been misundorstood
+due to this condition.
+
