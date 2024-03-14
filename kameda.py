@@ -120,7 +120,7 @@ with tab2:
     waterLevelValuesCN = waterLevelValues.assign(CN=range(1, len(waterLevelValues)+1, 1))
 
     # load map
-    kamedaMapPath = os.path.join(rootFolder, "numericalsimulation-max-waterdepth\Kameda_Cells.shp")
+    kamedaMapPath = os.path.join(rootFolder, "numericalsimulation-max-waterdepth", "Kameda_Cells.shp")
     kamedaMap = gpd.read_file(kamedaMapPath)
     gdf = kamedaMap.set_geometry("geometry")
     kamedaMap = gdf.to_crs("EPSG:4326")
