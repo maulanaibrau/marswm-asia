@@ -15,9 +15,9 @@ show_pages([
     Page("xuanthuy.py", "Xuan Thuy, Viet Nam", icon=":flag-vn:", in_section=True),
     Page("subang.py", "Subang, Indonesia", icon=":flag-id:", in_section=True),
 
-    Page("faq.py", "FAQ", "❔", in_section=False),
-    Page("contact.py", "Contact", icon="📩", in_section=False),
-    Page("about.py", "About", icon="🖼️", in_section=False) 
+    #Page("faq.py", "FAQ", "❔", in_section=False),
+    #Page("contact.py", "Contact", icon="📩", in_section=False),
+    #Page("about.py", "About", icon="🖼️", in_section=False) 
 ])
 
 hide_pages(["Thank you"])

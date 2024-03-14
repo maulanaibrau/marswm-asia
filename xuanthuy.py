@@ -26,7 +26,7 @@ css = '''
 #st.image("Kameda Watershed.png")
 st.markdown(css, unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs(['Map','Model'])
+tab1, tab2 = st.tabs(['Remote Sensing & Flood Map','Inland Flood Model'])
 
 with tab1:
     st.markdown("#### Rice Yield and Maximum Flood Depth Map", unsafe_allow_html=True)
@@ -47,7 +47,7 @@ with tab1:
                                  vmin = min(thresholds), 
                                  vmax = max(thresholds), 
                                  index = thresholds,
-                                 caption = "Predicted Yield, 2023")
+                                 caption = "Rice Yield Prediction (kg/10a)")
     step_colormap = colormap.to_step(index = thresholds, method = 'quantiles')
 
     riceMapGpdExplore = riceMapGpd.explore(
@@ -62,12 +62,21 @@ with tab1:
     gdf = waterDepthMap.set_geometry("geometry")
     waterDepthMap = gdf.to_crs("EPSG:4326")
 
+    waterdepth_colors = [mcolors.to_rgba('white', 0.1), '#cce0ff', '#a0c4ff', '#3c8cff', '#66a3ff', '#0073e6', '#004080']
+    waterdepth_thresholds = [0, 0.01, 0.2, 0.4, 0.6, 1, 3]
+    waterdepth_colormap = cm.LinearColormap(colors = waterdepth_colors, 
+                                vmin = min(waterdepth_thresholds), 
+                                vmax = max(waterdepth_thresholds), 
+                                index = waterdepth_thresholds,
+                                caption = "300 mm Max. Flood Depth (m)")
+    step_waterdepth_colormap = waterdepth_colormap.to_step(index = waterdepth_thresholds, method = 'quantiles')
+    
     waterDepthMap.explore(
         m = riceMapGpdExplore,
         column = '300mm',
         tooltip = ['CN', '100mm', '200mm', '300mm'],
-        # cmap = step_colormap,
-        color = "blue",
+        cmap = step_waterdepth_colormap,
+        color = step_waterdepth_colormap,
         name = "300 mm Max Flood Depth (m)"
     )
     folium.TileLayer("CartoDB positron", show=False).add_to(riceMapGpdExplore)
@@ -213,7 +222,7 @@ with tab2:
         #legend_kwds={"Flood Inundation Depth (m)"},
         ax=ax,
         cmap=cmap,
-        norm=norm,
+        #norm=norm,
         # cmap='rainbow'
         # cmap=cmap_name
     )

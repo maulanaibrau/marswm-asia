@@ -1,5 +1,6 @@
 import streamlit as st
 from st_pages import add_page_title, hide_pages
+from sklearn.metrics import r2_score
 
 import pandas as pd
 import numpy as np
@@ -161,14 +162,20 @@ with st.form("my_form"):
 
             c1, c2 = st.columns(2, gap='medium')
             with c1:
-                x = ob_volume[listOfData]
-                y = sim_volume[listOfData]
+                x = np.max(prediction[listOfData], axis=0)
+                y = np.max(Y_train[listOfData], axis=0)
 
                 fig, ax = plt.subplots()
                 
                 plt.plot(x, y, 'o')
                 m, b = np.polyfit(x, y, 1)
                 plt.plot(x, m*x+b)
+
+                # plt.text(.02, .8, r'$y$='+str(m)+r'$x$'+str(b))
+                ax.annotate(r'$R^2={:.3f}$'.format(r2_score(y, x)), (.4, .6))
+                ax.set_xlabel("Numerical Simulation Modelling-based Max. Inundation Depth (m)", fontsize=7)
+                ax.set_ylabel("LSTM Modelling-based Max. Inundation Depth (m)", fontsize=7)
+                ax.set_title("Rainfall scenario")
 
                 st.pyplot(fig)
             with c2:
@@ -212,7 +219,4 @@ with st.form("my_form"):
                 ax1.legend(h1+h2, l1+l2, loc=0)
 
                 st.pyplot(fig)
-
-
-
 

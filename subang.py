@@ -42,7 +42,7 @@ colormap = cm.LinearColormap(colors = colors,
                                 vmin = min(thresholds), 
                                 vmax = max(thresholds), 
                                 index = thresholds,
-                                caption = "Predicted Yield, 2023")
+                                caption = "Rice Yield Prediction (kg/10a)")
 step_colormap = colormap.to_step(index = thresholds, method = 'quantiles')
 
 riceMapGpdExplore = riceMapGpd.explore(
@@ -56,6 +56,15 @@ waterDepthPath = os.path.join(rootFolder, "numericalsimulation-max-waterdepth", 
 waterDepthMap = gpd.read_file(waterDepthPath)
 gdf = waterDepthMap.set_geometry("geometry")
 waterDepthMap = gdf.to_crs("EPSG:4326")
+
+waterdepth_colors = [mcolors.to_rgba('white', 0.1), '#cce0ff', '#a0c4ff', '#3c8cff', '#66a3ff', '#0073e6', '#004080']
+waterdepth_thresholds = [0, 0.01, 0.2, 0.4, 0.6, 1, 3]
+waterdepth_colormap = cm.LinearColormap(colors = waterdepth_colors, 
+                            vmin = min(waterdepth_thresholds), 
+                            vmax = max(waterdepth_thresholds), 
+                            index = waterdepth_thresholds,
+                            caption = "180 mm Max. Flood Depth (m)")
+step_waterdepth_colormap = waterdepth_colormap.to_step(index = waterdepth_thresholds, method = 'quantiles')
 
 waterDepthMap.explore(
     m = riceMapGpdExplore,
